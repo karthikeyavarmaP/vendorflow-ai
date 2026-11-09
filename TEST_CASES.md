@@ -1,54 +1,53 @@
-# VendorFlow AI — Test cases
+# VendorFlow AI — Reproducible test cases
 
-Use synthetic information only. The built-in **Load sample case** button fills a known-good example and attaches five generated TXT fixtures to the matching document controls.
+Use synthetic data only. These scenarios are built into the live application so they can be loaded without manually editing fields.
 
-## 1. Happy path — complete evidence
+## How to run any scenario
 
-- Click **Load sample case**.
-- Click **Run verification**.
+1. Open https://karthikeyavarmap.github.io/vendorflow-ai/
+2. In the **Demo test cases** selector, choose a scenario.
+3. Click **Load selected test**.
+4. Click **Run verification**.
+5. Confirm the expected decision and review the reasons shown below it.
+6. Open **Run history** to see the saved run.
+
+Each time you load a scenario, the app fills the vendor fields and generates the sample TXT files locally in the browser. Loading a scenario does not submit or save a verification; click **Run verification** to execute it.
+
+## Scenario 1 — Happy path (APPROVED)
+
+- Select **Test 1 · All valid (APPROVED)**.
+- Load selected test, then run verification.
 - Expected: **APPROVED**.
-- Confirm the pipeline stages complete and the result explains the successful field/document checks.
-- Open **Run history** and confirm the run appears.
+- Expected evidence: all five documents are present, text is readable, and configured identifier/document checks pass.
 
-The sample uses fictitious details and the reserved `.example` email domain.
+## Scenario 2 — Missing compliance declaration (PENDING)
 
-## 2. Missing evidence — pending
+- Select **Test 2 · Missing compliance (PENDING)**.
+- Load selected test, then run verification.
+- Expected: **PENDING**.
+- Expected reason: the compliance declaration is missing.
 
-- Load the sample case.
-- Clear the **Compliance declaration** file input (select it and cancel, or use Clear form then reload the sample and clear this one).
-- Run verification.
-- Expected: **PENDING**, with the missing compliance declaration listed and a follow-up request.
+## Scenario 3 — Invalid PAN (REJECTED)
 
-## 3. Tax identifier conflict — rejected
+- Select **Test 3 · Invalid PAN (REJECTED)**.
+- Load selected test, then run verification.
+- Expected: **REJECTED**.
+- Expected reason: PAN format is invalid. The built-in invalid value is deliberately too short.
 
-- Load the sample case.
-- Change PAN from `ABCDE1234F` to another valid-format value, for example `FGHIJ5678K`.
-- Leave the GSTIN unchanged.
-- Run verification.
-- Expected: **REJECTED**, because the PAN segment embedded in GSTIN does not match the submitted PAN.
+## Scenario 4 — Bank account-holder mismatch (PENDING)
 
-## 4. Bank account-holder mismatch — pending
+- Select **Test 4 · Bank name mismatch (PENDING)**.
+- Load selected test, then run verification.
+- Expected: **PENDING**.
+- Expected reason: the bank account-holder name differs from the legal company name and needs confirmation.
 
-- Load the sample case.
-- Change account holder name to `Acme Trading`.
-- Keep the legal company name and bank proof unchanged.
-- Run verification.
-- Expected: **PENDING**, with a bank-account-holder name review warning.
+## Scenario 5 — Invalid IFSC (REJECTED)
 
-## 5. Unreadable or image-only evidence — pending
-
-- Fill all required fields with the sample values.
-- Replace one evidence file with a scanned/image-only PDF (or an empty TXT file).
-- Run verification.
-- Expected: **PENDING** because no selectable text can be extracted or compared. A human reviewer must inspect the source document.
-
-## 6. Malformed IFSC — rejected
-
-- Load the sample case.
-- Change IFSC to `12345`.
-- Run verification.
-- Expected: **REJECTED** with the IFSC format issue.
+- Select **Test 5 · Invalid IFSC (REJECTED)**.
+- Load selected test, then run verification.
+- Expected: **REJECTED**.
+- Expected reason: the IFSC format is invalid.
 
 ## Interpretation
 
-These are deterministic prototype rules, not external verification. A matching string in a document does not prove authenticity; a failed text match may also be caused by OCR, formatting, abbreviations or document quality. In real onboarding, route uncertain evidence to a reviewer and integrate trusted registry/bank verification APIs only with authorization.
+These are deterministic prototype rules, not external verification. A matching string in a document does not prove authenticity; a failed text match may also be caused by OCR, formatting, abbreviations or document quality. In a real onboarding workflow, uncertain evidence should be routed to a human reviewer and trusted registry/bank integrations should be used only with appropriate authorization.
