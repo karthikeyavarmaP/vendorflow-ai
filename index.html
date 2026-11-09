@@ -44,7 +44,7 @@
 <div class="upload"><label for="complianceDoc">Compliance declaration *</label><input id="complianceDoc" type="file" accept=".pdf,.txt"><span class="hint" id="complianceDocHint">PDF or TXT · max 8 MB</span></div>
 </div>
 <div class="notice">Privacy note: files are read locally in this browser and are not uploaded to a server. Run history is stored in this browser's local storage. Do not use real sensitive banking documents in this demonstration.</div>
-<div class="actions"><button class="btn primary" id="runBtn" type="submit">Run verification →</button><button class="btn" type="button" id="resetBtn">Clear form</button><button class="btn" type="button" id="demoBtn">Load sample case</button></div>
+<div class="actions"><button class="btn primary" id="runBtn" type="submit">Run verification →</button><button class="btn" type="button" id="resetBtn">Clear form</button></div><div class="actions" style="margin-top:10px"><select id="demoScenario" aria-label="Choose a demo test case" style="background:#0c1727;border:1px solid #2b405c;border-radius:9px;padding:10px;color:var(--text);flex:1;min-width:190px"><option value="approved">Test 1 · All valid (APPROVED)</option><option value="missing">Test 2 · Missing compliance (PENDING)</option><option value="pan">Test 3 · Invalid PAN (REJECTED)</option><option value="bank">Test 4 · Bank name mismatch (PENDING)</option><option value="ifsc">Test 5 · Invalid IFSC (REJECTED)</option></select><button class="btn" type="button" id="demoBtn">Load selected test</button></div>
 </div>
 </form>
 </main>
@@ -136,7 +136,10 @@ $('vendorForm').addEventListener('submit',async e=>{e.preventDefault();const btn
  }catch(err){showResult({status:'PENDING',reasons:['Verification could not complete: '+err.message],followup:'Check the file type and try again.'},data.name||'New vendor');doneStages()}finally{btn.disabled=false;btn.textContent='Run verification →'}});
 $('resetBtn').addEventListener('click',()=>{ $('vendorForm').reset();$('resultBox').classList.add('hide');[...$('stages').children].forEach(n=>n.className='stage');docIds.forEach(k=>$(k+'Hint').textContent='PDF or TXT · max 8 MB')});
 docIds.forEach(k=>$(k).addEventListener('change',()=>{$(k+'Hint').textContent=$(k).files[0]?$(k).files[0].name+' · '+Math.round($(k).files[0].size/1024)+' KB':'PDF or TXT · max 8 MB'}));
-$('demoBtn').addEventListener('click',()=>{const sample={vendorName:'Acme Industrial Supplies Pvt Ltd',contactEmail:'accounts@acme.example',phone:'+91 98765 43210',country:'India',pan:'ABCDE1234F',gstin:'22ABCDE1234F1Z5',accountName:'Acme Industrial Supplies Pvt Ltd',accountNumber:'123456789012',ifsc:'SBIN0001234',bankName:'State Bank of India'};Object.entries(sample).forEach(([k,v])=>{const field=$(k);if(field)field.value=v});const textDocs={incorporation:`CERTIFICATE OF INCORPORATION
+function loadSampleCase(scenario='approved'){
+ const sample={vendorName:'Acme Industrial Supplies Pvt Ltd',contactEmail:'accounts@acme.example',phone:'+91 98765 43210',country:'India',pan:'ABCDE1234F',gstin:'22ABCDE1234F1Z5',accountName:'Acme Industrial Supplies Pvt Ltd',accountNumber:'123456789012',ifsc:'SBIN0001234',bankName:'State Bank of India'};
+ Object.entries(sample).forEach(([k,v])=>{const field=$(k);if(field)field.value=v});
+ const textDocs={incorporation:`CERTIFICATE OF INCORPORATION
 Company Name: Acme Industrial Supplies Pvt Ltd
 Registration No: U12345MH2020PTC123456`,panDoc:`INCOME TAX DEPARTMENT
 PAN: ABCDE1234F
@@ -147,7 +150,27 @@ Account Holder: Acme Industrial Supplies Pvt Ltd
 Account Number: 123456789012
 IFSC: SBIN0001234
 Bank: State Bank of India`,complianceDoc:`VENDOR COMPLIANCE DECLARATION
-Acme Industrial Supplies Pvt Ltd confirms the information supplied is accurate.`};try{docIds.forEach(k=>{const transfer=new DataTransfer();const f=new File([textDocs[k]],k+'-sample.txt',{type:'text/plain'});transfer.items.add(f);$(k).files=transfer.files;$(k+'Hint').textContent=f.name+' · sample TXT'});$('resultBox').classList.add('hide');$('vendorForm').reportValidity()}catch(err){alert('Could not load sample files: '+err.message)}});function renderHistory(){if(!history.length){$('historyList').innerHTML='<div class="empty">No submissions yet. Run a verification to see it here.</div>';return}$('historyList').innerHTML='<div class="historyrow head"><span>Vendor</span><span>Submitted</span><span>Status</span><span>Run ID</span></div>'+history.map(x=>'<div class="historyrow"><b>'+escapeHtml(x.name)+'</b><span>'+new Date(x.at).toLocaleString()+'</span><span><span class="status '+x.status.toLowerCase()+'">'+x.status+'</span></span><span class="tiny">#'+x.id.toString().slice(-7)+'</span></div>').join('')}
+Acme Industrial Supplies Pvt Ltd confirms the information supplied is accurate.`};
+ if(scenario==='pan')$('pan').value='ABCDE1234';
+ if(scenario==='bank')$('accountName').value='Different Vendor Name';
+ if(scenario==='ifsc')$('ifsc').value='INVALID1234';
+ try{
+  docIds.forEach(k=>{
+   const transfer=new DataTransfer();
+   if(!(scenario==='missing'&&k==='complianceDoc')){
+    const file=new File([textDocs[k]],k+'-sample.txt',{type:'text/plain'});
+    transfer.items.add(file);
+   }
+   $(k).files=transfer.files;
+   $(k+'Hint').textContent=$(k).files[0]?$(k).files[0].name+' · sample TXT':'No file selected · required';
+  });
+  $('resultBox').classList.add('hide');
+  [...$('stages').children].forEach(n=>n.className='stage');
+  $('vendorForm').reportValidity();
+ }catch(err){alert('Could not load the selected test case: '+err.message)}
+}
+$('demoBtn').addEventListener('click',()=>loadSampleCase($('demoScenario').value));
+function renderHistory(){if(!history.length){$('historyList').innerHTML='<div class="empty">No submissions yet. Run a verification to see it here.</div>';return}$('historyList').innerHTML='<div class="historyrow head"><span>Vendor</span><span>Submitted</span><span>Status</span><span>Run ID</span></div>'+history.map(x=>'<div class="historyrow"><b>'+escapeHtml(x.name)+'</b><span>'+new Date(x.at).toLocaleString()+'</span><span><span class="status '+x.status.toLowerCase()+'">'+x.status+'</span></span><span class="tiny">#'+x.id.toString().slice(-7)+'</span></div>').join('')}
 $('clearHistory').addEventListener('click',()=>{if(confirm('Delete all locally saved run history?')){history=[];localStorage.removeItem('vendorflow_runs');renderHistory();updateStats()}});
 updateStats();renderHistory();
 </script>
