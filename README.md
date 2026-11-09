@@ -1,61 +1,61 @@
-# VendorFlow AI — Intelligent Vendor Onboarding
+# VendorFlow AI — Vendor Onboarding & Verification
 
-A browser-based prototype for PS-2 (Vendor Onboarding). It accepts vendor details and compliance documents, runs deterministic checks, displays each processing stage, explains the outcome, and keeps a browser-local run history.
+A browser-based PS-2 vendor onboarding prototype. It collects vendor details and five supporting documents, runs transparent deterministic checks, shows processing stages, explains the decision, and stores a local run history.
 
-## Run the application
+## Live application
 
-**Option 1 — Run locally**
-1. Download or clone this repository.
-2. Open `index.html` in Chrome, Edge, or Firefox.
-3. Click **Load sample case**, then **Run verification**.
+https://karthikeyavarmap.github.io/vendorflow-ai/
 
-No build step or server is required. An internet connection is needed for the PDF.js library used to extract text from PDF files. TXT documents work without PDF parsing.
+## Run the demo
 
-**Option 2 — Publish with GitHub Pages**
-1. Open this repository on GitHub.
-2. Go to **Settings → Pages**.
-3. Under **Build and deployment**, choose **Deploy from a branch**.
-4. Select the `main` branch and `/(root)`, then save.
-5. Wait for GitHub Pages to publish, then use the URL shown in Settings → Pages.
+1. Open the live application.
+2. In the **Demo test cases** selector, choose one of the five scenarios.
+3. Click **Load selected test**. The form and synthetic TXT documents are populated for that scenario.
+4. Click **Run verification**.
+5. Review the status, reasons, pipeline stages, and (optionally) the **Run history** tab.
+6. Repeat with another scenario.
 
-GitHub Pages publishes static files; this app deliberately uses browser-side JavaScript rather than a Python/server backend. See [GitHub Pages documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site).
+You can also fill in your own synthetic vendor details and upload PDF or TXT evidence. The built-in sample data is fictitious and uses the reserved `.example` email domain.
 
-## What it does
+## Built-in test scenarios
 
-1. Collects legal name, business email, phone, PAN, GSTIN, bank account, IFSC and bank name.
-2. Requires five evidence types: incorporation proof, PAN document, GST certificate, bank proof and compliance declaration.
-3. Reads TXT files and extracts selectable text from PDFs in the browser (via PDF.js).
-4. Checks required fields and identifier formats; checks the PAN embedded in the GSTIN; compares submitted values with text extracted from the relevant documents; flags a mismatch between company and account-holder names for review.
-5. Returns **APPROVED**, **PENDING** or **REJECTED**, with reasons and a follow-up message.
-6. Shows pipeline stages and stores the latest 50 run summaries in localStorage.
+| Scenario | Expected result | What it demonstrates |
+|---|---|---|
+| All valid | APPROVED | Complete evidence and matching values |
+| Missing compliance declaration | PENDING | Required evidence is absent |
+| Invalid PAN | REJECTED | PAN format validation fails |
+| Bank account-holder mismatch | PENDING | Name discrepancy is routed for review |
+| Invalid IFSC | REJECTED | IFSC format validation fails |
 
-## Decision logic
+See [TEST_CASES.md](TEST_CASES.md) for the reproducible test procedure and expected reasons.
 
-- **REJECTED:** a critical identifier fails the configured format checks, or the PAN embedded in the GSTIN conflicts with the submitted PAN.
-- **PENDING:** a required document is missing, unreadable, has no selectable text, or does not visibly match a submitted value; a bank account-holder/company-name difference is also routed for review.
-- **APPROVED:** all required evidence is present and readable, and the configured checks find no issues.
+## What the prototype checks
 
-A decision is based on transparent rules in `index.html`, not a generative AI model. “AI” is the product concept/name; the current implementation is deterministic and explainable.
+- Required company, contact, tax and banking fields.
+- PAN, GSTIN structure, PAN-to-GSTIN consistency, IFSC, account number, email and phone formats.
+- Presence and text readability of five evidence types: company registration proof, PAN document, GST certificate, bank proof and compliance declaration.
+- Whether extracted document text visibly contains submitted company/tax/bank values.
+- Company legal name versus bank account-holder name, routed to manual review when they differ.
+- A transparent outcome: **APPROVED**, **PENDING**, or **REJECTED**, with reasons and follow-up guidance.
+- A five-stage verification pipeline and browser-local submission history (up to 50 runs).
 
-## Important scope and privacy limits
+## Technology
 
-- This is a decision-support demonstration, not a real KYC, legal, tax, sanctions, credit or fraud-screening service.
-- It does **not** connect to MCA, GSTN, Income Tax, banks, payment networks or external registries. It cannot confirm that a company exists or that an account is owned by the vendor.
-- PDF text extraction cannot reliably read scanned/image-only PDFs; those are routed to manual review. TXT is supported for test fixtures.
-- Uploaded files are processed in the browser and are not sent to a server. Run summaries (vendor name, email, status, reasons and timestamp) are stored in the current browser's localStorage. Do not upload real sensitive documents or real banking information to this demo.
-- Use synthetic data only. Browser-local history is not a secure production database and does not sync across devices.
+- HTML, CSS and vanilla JavaScript.
+- PDF.js for extracting selectable text from PDFs.
+- Browser File API and localStorage.
+- GitHub Pages static hosting; no build step or application server is required.
 
-## Demo checklist
+## Important limitations and privacy
 
-1. Load the built-in sample case and run it (happy path).
-2. Remove one required document and run again (pending).
-3. Change the PAN while leaving the GSTIN unchanged (rejected for PAN/GSTIN inconsistency).
-4. Upload a scan-only PDF or a TXT file with conflicting identifiers (pending/manual review).
-5. Open **Run history** to show the saved decision and reason trail.
+- The current implementation uses deterministic rules; it is not a generative-AI model.
+- This is a decision-support prototype, not a production KYC, legal, tax, sanctions, credit, fraud-screening or bank-account verification service.
+- It does not connect to MCA, GSTN, Income Tax, banks, payment networks or external registries. A text match does not prove that a document is authentic or that a bank account belongs to the vendor.
+- Scanned/image-only PDFs may not yield selectable text and should be manually reviewed.
+- Uploaded files are processed in the browser and are not sent to a server. Run summaries are stored in localStorage in the current browser only and do not sync across devices.
+- Use synthetic data only. Do not upload real identity, tax or banking documents.
 
-See [TEST_CASES.md](TEST_CASES.md) for reproducible scenarios.
+## Repository files
 
-## Files
-
-- `index.html` — complete static application, styles, form, document extraction and decision rules.
-- `TEST_CASES.md` — edge-case walkthrough and expected outcomes.
+- `index.html` — complete static application, styles, form, sample scenarios, document extraction and decision rules.
+- `TEST_CASES.md` — test scenarios, steps and expected outcomes.
